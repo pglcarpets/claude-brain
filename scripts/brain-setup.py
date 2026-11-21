@@ -1077,14 +1077,21 @@ def phase_registration(cfg):
     hooks_added = 0
 
     for event, script in zip(HOOK_EVENTS, HOOK_SCRIPTS):
-        hook_cmd = f"{PYTHON} {root}/hooks/{script}"
+        # Forward slashes: on Windows, Claude Code runs hook commands through
+        # Git Bash, which strips unquoted backslashes (C:\Python -> C:Python).
+        hook_cmd = f'"{Path(PYTHON).as_posix()}" "{(Path(root) / "hooks" / script).as_posix()}"'
         existing = hooks.get(event, [])
 
-        # Check if already registered with same command
+        # Check if already registered; repair older backslash/unquoted forms
         already = False
+        norm_target = hook_cmd.replace('"', "")
         for entry in existing:
             for h in entry.get("hooks", []):
-                if h.get("command") == hook_cmd:
+                cmd = h.get("command", "")
+                if cmd.replace("\\", "/").replace('"', "") == norm_target:
+                    if cmd != hook_cmd:
+                        h["command"] = hook_cmd
+                        hooks_added += 1
                     already = True
                     break
 
