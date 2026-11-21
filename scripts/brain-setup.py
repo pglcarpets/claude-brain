@@ -257,7 +257,12 @@ def phase_projects():
         default_db = str(home / "claude-brain-local" / "claude-brain.db")
         db_path = ask("Local database path (NOT in sync folder)", default_db)
     else:
-        default_root = str(home / "claude-brain")
+        # Default to this repo: hooks/MCP/scripts are run from root_path, and
+        # setup does not copy code anywhere else.
+        if (script_dir / "mcp" / "server.py").exists():
+            default_root = str(script_dir)
+        else:
+            default_root = str(home / "claude-brain")
         root_path = ask("Root folder path", default_root)
         root_path = os.path.expanduser(root_path)
         db_path = os.path.join(root_path, "claude-brain.db")
