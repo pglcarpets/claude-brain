@@ -356,9 +356,11 @@ def main():
             "hasTrustDialogAccepted": False,
         }
 
-    # Register brain-server
+    # Register brain-server (skip if already registered globally at user scope)
     mcp_servers = projects_section[project_path_str].get("mcpServers", {})
-    if "brain-server" not in mcp_servers:
+    if "brain-server" in claude_json.get("mcpServers", {}):
+        ok("brain-server MCP registered globally - available here already")
+    elif "brain-server" not in mcp_servers:
         mcp_servers["brain-server"] = brain_mcp_entry
         projects_section[project_path_str]["mcpServers"] = mcp_servers
         ok("brain-server MCP registered")

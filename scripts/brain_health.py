@@ -387,6 +387,9 @@ def check_mcp_server(config):
     except Exception as e:
         return "FAIL", f"MCP: failed to read ~/.claude.json: {e}", details
 
+    global_registered = "brain-server" in claude_config.get("mcpServers", {})
+    details["global"] = global_registered
+
     projects = claude_config.get("projects", {})
     registered_projects = []
     for project_path, project_data in projects.items():
@@ -399,8 +402,10 @@ def check_mcp_server(config):
     details["registered_projects"] = registered_projects
     details["registered_count"] = len(registered_projects)
 
-    if len(registered_projects) == 0:
-        return "FAIL", "MCP: brain-server not registered in any project", details
+    if not global_registered and len(registered_projects) == 0:
+        return "FAIL", "MCP: brain-server not registered (global or any project)", details
+
+    scope = "globally" if global_registered else f"for {len(registered_projects)} projects"
 
     # Verify server.py exists
     server_path = os.path.join(ROOT_PATH, "mcp", "server.py")
@@ -408,9 +413,9 @@ def check_mcp_server(config):
     details["server_py_exists"] = server_exists
 
     if not server_exists:
-        return "FAIL", f"MCP: registered for {len(registered_projects)} projects but server.py missing", details
+        return "FAIL", f"MCP: registered {scope} but server.py missing", details
 
-    summary = f"MCP: brain-server registered for {len(registered_projects)} projects, server.py exists"
+    summary = f"MCP: brain-server registered {scope}, server.py exists"
     return "PASS", summary, details
 
 

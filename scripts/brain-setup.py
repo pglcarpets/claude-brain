@@ -1128,8 +1128,6 @@ def phase_registration(cfg):
     else:
         claude_json = {}
 
-    projects_section = claude_json.get("projects", {})
-    mcp_added = 0
     server_path = str(root / "mcp" / "server.py")
 
     mcp_entry = {
@@ -1139,50 +1137,34 @@ def phase_registration(cfg):
         "env": {}
     }
 
-    for p in cfg["projects"]:
-        project_path = str(root / p["folder_name"])
-        if project_path not in projects_section:
-            projects_section[project_path] = {
-                "allowedTools": [],
-                "mcpContextUris": [],
-                "mcpServers": {},
-                "enabledMcpjsonServers": [],
-                "disabledMcpjsonServers": [],
-                "hasTrustDialogAccepted": False,
-            }
+    # Register at user scope (top-level mcpServers) so brain-server is
+    # available from ANY directory, not just the claude-brain folders.
+    user_mcp = claude_json.get("mcpServers", {})
 
-        existing_mcp = projects_section[project_path].get("mcpServers", {})
-        if "brain-server" not in existing_mcp:
-            existing_mcp["brain-server"] = mcp_entry
-            projects_section[project_path]["mcpServers"] = existing_mcp
-            mcp_added += 1
+    # Older installs registered brain-server per project path. Those entries
+    # shadow the user-scope one (project scope wins), so drop any that point
+    # at this install's server.py.
+    stale = [
+        path for path, p_cfg in claude_json.get("projects", {}).items()
+        if server_path in p_cfg.get("mcpServers", {}).get("brain-server", {}).get("args", [])
+    ]
 
-    # Also register for the root path
-    root_str = str(root)
-    if root_str not in projects_section:
-        projects_section[root_str] = {
-            "allowedTools": [],
-            "mcpContextUris": [],
-            "mcpServers": {},
-            "enabledMcpjsonServers": [],
-            "disabledMcpjsonServers": [],
-            "hasTrustDialogAccepted": False,
-        }
-    if "brain-server" not in projects_section[root_str].get("mcpServers", {}):
-        projects_section[root_str].setdefault("mcpServers", {})["brain-server"] = mcp_entry
-        mcp_added += 1
-
-    if mcp_added > 0:
-        claude_json["projects"] = projects_section
-        info(f"Will register MCP server for {mcp_added} project path(s)")
+    if user_mcp.get("brain-server") == mcp_entry and not stale:
+        ok("MCP server already registered globally (user scope)")
+    else:
+        info("Will register brain-server globally (available in every directory)")
+        if stale:
+            info(f"Will remove {len(stale)} old per-project brain-server registration(s)")
         if ask_yn("Register MCP server?"):
+            user_mcp["brain-server"] = mcp_entry
+            claude_json["mcpServers"] = user_mcp
+            for path in stale:
+                del claude_json["projects"][path]["mcpServers"]["brain-server"]
             with open(claude_json_path, "w") as f:
                 json.dump(claude_json, f, indent=4)
-            ok(f"MCP server registered for {mcp_added} paths")
+            ok("MCP server registered globally")
         else:
             warn("MCP not registered - brain queries won't work until registered")
-    else:
-        ok("MCP server already registered for all projects")
 
     # --- Install custom slash commands ---
     commands_dir = home / ".claude" / "commands"
@@ -1380,7 +1362,9 @@ def phase_health_check(cfg):
             1 for p_cfg in cj.get("projects", {}).values()
             if "brain-server" in p_cfg.get("mcpServers", {})
         )
-        if mcp_count > 0:
+        if "brain-server" in cj.get("mcpServers", {}):
+            checks.append(("MCP registered", True, "global (user scope)"))
+        elif mcp_count > 0:
             checks.append(("MCP registered", True, f"{mcp_count} project(s)"))
         else:
             checks.append(("MCP registered", False, "not registered"))

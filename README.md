@@ -428,7 +428,7 @@ See the [Roadmap](https://github.com/mikeadolan/claude-brain/discussions/1) for 
 ## Troubleshooting
 
 **Claude isn't using the brain tools:**
-Run `claude mcp list` - you should see `brain-server`. If missing: `claude mcp add brain-server python3 /path/to/mcp/server.py`
+Run `claude mcp list` - you should see `brain-server`. If missing: `claude mcp add --scope user brain-server -- python3 /path/to/mcp/server.py`
 
 **Hooks aren't firing:**
 Check `~/.claude/settings.json` for hook entries. Check `logs/` for error output.

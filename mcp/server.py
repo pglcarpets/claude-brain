@@ -11,7 +11,7 @@ All writes are handled by hooks and scripts.
   search_semantic, get_status, get_schema
 
 Registration:
-  claude mcp add brain-server python3 /path/to/mcp/server.py
+  claude mcp add --scope user brain-server -- python3 /path/to/mcp/server.py
 """
 
 import datetime

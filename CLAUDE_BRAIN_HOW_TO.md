@@ -1088,9 +1088,9 @@ If you prefer to add a project without the script:
    folder and update the project name, prefix, and label. Include the session
    protocol checklist tables.
 
-4. **Register MCP** so Claude can access the brain from this folder:
+4. **Register MCP** (skip if already registered globally -- `brain-setup.py` does this by default):
    ```bash
-   claude mcp add brain-server python3 /path/to/claude-brain/mcp/server.py
+   claude mcp add --scope user brain-server -- python3 /path/to/claude-brain/mcp/server.py
    ```
 
 5. **Restart Claude Code** -- the startup hook will register the new project automatically.
@@ -1102,11 +1102,12 @@ If you prefer to add a project without the script:
 ### "Claude isn't using the brain tools"
 - **Check:** Is the MCP server registered? Run: `claude mcp list`
   You should see `brain-server` in the output.
-- **Check:** Are you in a project folder that has MCP registered?
-  The brain-server is registered per-project in `~/.claude.json`.
+- **Check:** brain-server is registered globally (user scope, top-level
+  `mcpServers` in `~/.claude.json`), so it works from any directory. Older
+  installs registered it per-project -- re-run `brain-setup.py` to migrate.
 - **Fix:** If missing, register it:
   ```bash
-  claude mcp add brain-server python3 /path/to/claude-brain/mcp/server.py
+  claude mcp add --scope user brain-server -- python3 /path/to/claude-brain/mcp/server.py
   ```
 - **Workaround:** Be explicit: "Use the brain-server MCP tools to search for..."
 
