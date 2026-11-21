@@ -388,7 +388,7 @@ def main():
         cwd = os.environ.get("CWD", os.getcwd())
         mapping = config.get("jsonl_project_mapping", {})
         for folder, prefix in mapping.items():
-            if folder in cwd:
+            if folder.lower() in cwd.lower():
                 cwd_project = prefix
                 break
 

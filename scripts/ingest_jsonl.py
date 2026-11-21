@@ -137,7 +137,7 @@ def detect_project(file_path, first_line_data, mappings, override=None):
 
     # Check folder name / path fragment match
     for pattern, prefix in mappings:
-        if pattern in norm_path:
+        if pattern.lower() in norm_path.lower():
             return prefix
 
     # Check cwd from first JSONL line
@@ -146,7 +146,7 @@ def detect_project(file_path, first_line_data, mappings, override=None):
         if cwd:
             norm_cwd = cwd.replace("\\", "/")
             for pattern, prefix in mappings:
-                if pattern in norm_cwd:
+                if pattern.lower() in norm_cwd.lower():
                     return prefix
 
     return "oth"

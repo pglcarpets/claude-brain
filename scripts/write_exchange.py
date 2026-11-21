@@ -130,13 +130,13 @@ def detect_project(config, jsonl_path, cwd):
 
     norm_path = jsonl_path.replace("\\", "/")
     for pattern, prefix in sorted_mappings:
-        if pattern in norm_path:
+        if pattern.lower() in norm_path.lower():
             return prefix
 
     if cwd:
         norm_cwd = cwd.replace("\\", "/")
         for pattern, prefix in sorted_mappings:
-            if pattern in norm_cwd:
+            if pattern.lower() in norm_cwd.lower():
                 return prefix
 
     return "oth"

@@ -49,7 +49,7 @@ def main():
             mapping = config.get("jsonl_project_mapping", {})
             cwd_project = None
             for folder, prefix in mapping.items():
-                if folder in cwd:
+                if folder.lower() in cwd.lower():
                     cwd_project = prefix
                     break
             if cwd_project:
